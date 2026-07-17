@@ -1,5 +1,5 @@
-node_modules
-uploads
+﻿node_modules
+uploads/
 *.log
-.pnpm
-pnpm-lock.yaml
+data/*.db
+package-lock.json

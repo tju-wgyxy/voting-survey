@@ -1,4 +1,4 @@
-const $ = (id) => document.getElementById(id);
+﻿const $ = (id) => document.getElementById(id);
 let currentUser = null, currentSurveyId = null, currentProfiles = [];
 function getHash() { return window.location.hash.slice(1) || ""; }
 function setHash(h) { window.location.hash = h; }
@@ -131,9 +131,7 @@ function renderProfiles() {
     av.style.cssText = "display:flex;align-items:center;gap:12px;margin:10px 0";
     var img = document.createElement("img");
     img.style.cssText = "width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #ddd;display:none";
-    var imgCheck = new Image();
-    imgCheck.onload = function() { img.src = "/uploads/" + currentSurveyId + "_" + p.id + ".jpg?t=" + Date.now(); img.style.display = "block"; };
-    imgCheck.src = "/uploads/" + currentSurveyId + "_" + p.id + ".jpg";
+    var prevPath = "/api/avatar/" + currentSurveyId + "_" + p.id; img.src = prevPath + "?t=" + Date.now(); img.style.display = "block";
     var btn = document.createElement("button");
     btn.className = "btn-inline"; btn.textContent = "\u7167\u7247";
     var fi = document.createElement("input"); fi.type = "file"; fi.accept = "image/*"; fi.style.display = "none";
@@ -290,7 +288,7 @@ function showVoterContent(data, shareId, code, existingVotes) {
         el.src = aimg.src; el.style.cssText = "width:80px;height:80px;border-radius:50%;object-fit:cover;margin:10px 0";
         body.insertBefore(el, body.firstChild);
       };
-      aimg.src = "/uploads/" + data.id + "_" + p.id + ".jpg?t=" + Date.now();
+      aimg.src = ""/api/avatar/"" + data.id + ""_"" + p.id + ""?t="" + Date.now();
     }
     var intro = document.createElement("div");
     intro.style.cssText = "line-height:1.8;color:#333;white-space:pre-wrap;font-size:14px;margin:8px 0";
@@ -344,3 +342,4 @@ function showVoterContent(data, shareId, code, existingVotes) {
 }
 
 $("voterBackBtn").onclick = function() { setHash("dashboard"); };
+
