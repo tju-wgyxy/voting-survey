@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>投票问卷系统</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="login-container" id="loginContainer">
+  <div class="login-box">
+    <h1>管理员登录</h1>
+    <p>请输入管理员登录码</p>
+    <input type="text" id="loginInput" placeholder="输入登录码" maxlength="20">
+    <button id="loginBtn">登录</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<div class="main-container" id="mainContainer" style="display:none">
+  <div class="header">
+    <div class="header-left"><strong id="userName"></strong><span class="user-badge" id="userRole"></span></div>
+    <div><button class="logout-btn" id="logoutBtn">退出</button></div>
+  </div>
+
+  <div id="dashboardView">
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between">
+        <span>我的问卷</span>
+        <button class="btn-primary" id="createSurveyBtn">+ 新建问卷</button>
+      </div>
+      <div id="surveyList"></div>
+    </div>
+  </div>
+
+  <div id="editorView" style="display:none">
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between">
+        <span><a href="#" class="back-link" onclick="showDashboard()">← 返回</a> ✏️ <span id="editorTitle">编辑问卷</span></span>
+        <div><button class="btn-inline" id="publishBtn">发布</button><button class="btn-primary" id="saveSurveyBtn">保存</button></div>
+      </div>
+      <div id="publishInfo" style="background:#e8f5e9;border-radius:8px;padding:12px;margin-bottom:16px;display:none">
+        <strong>已发布！</strong><br>
+        分享链接：<a id="shareLink" href="#" target="_blank"></a>
+        <button class="btn-copy" onclick="copyLink()">复制</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">问卷标题</div>
+      <input type="text" id="surveyTitleInput" class="input-field" placeholder="输入问卷标题">
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between">
+        <span>被评价人</span>
+        <button class="btn-inline" id="addProfileBtn">+ 添加人员</button>
+      </div>
+      <p style="color:#999;font-size:13px;margin-bottom:12px">每位被评价人有独立的照片和介绍，投票人将依次为每人评分。点击右侧复制按钮可复制上一位的内容。</p>
+      <div id="profileList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">公共投票选项</div>
+      <p style="color:#999;font-size:13px;margin-bottom:10px">以下选项对所有被评价人通用</p>
+      <div id="optionsEditor"></div>
+    </div>
+  </div>
+
+  <div id="resultsView" style="display:none">
+    <div class="card">
+      <div class="card-title"><a href="#" class="back-link" onclick="showDashboard()">← 返回</a> 统计 <span id="resultsTitle"></span></div>
+      <div id="resultsContent"></div>
+      <button class="export-btn" id="exportBtn">导出 CSV</button>
+    </div>
+  </div>
+</div>
+
+<div id="voterContainer" style="display:none">
+  <div class="main-container">
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between">
+        <span id="voterTitle">问卷</span>
+        <button class="logout-btn" id="voterBackBtn" style="display:none">返回管理</button>
+      </div>
+    </div>
+    <div class="card" id="voterLoginCard">
+      <div class="card-title">登录</div>
+      <input type="text" id="voterCodeInput" class="input-field" placeholder="输入登录码" style="margin-bottom:8px">
+      <button class="btn-primary" id="voterLoginBtn">确认</button>
+      <div id="voterLoginError" style="color:#e74c3c;font-size:13px;margin-top:8px"></div>
+    </div>
+    <div id="voterContent" style="display:none"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

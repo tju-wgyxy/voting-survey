@@ -1,0 +1,10 @@
+{
+  "build": {
+    "builder": "nixpacks",
+    "buildCommand": "pnpm install"
+  },
+  "deploy": {
+    "startCommand": "node server.js",
+    "healthcheckPath": "/"
+  }
+}
