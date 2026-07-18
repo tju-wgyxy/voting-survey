@@ -1,4 +1,4 @@
-﻿import express from "express";
+import express from "express";
 import multer from "multer";
 import cors from "cors";
 import path from "path";
@@ -50,7 +50,7 @@ function genId() {
 // Auth
 app.use("/api", (req, res, next) => {
   if (req.path === "/login" || req.path === "/host" || req.path.startsWith("/s/")) return next();
-  const code = req.headers["x-user-code"];
+  const code = req.headers["x-user-code"] || req.query.code;
   if (!code) return res.status(401).json({ error: "未登录" });
   const codes = getCodes();
   if (!codes[code]) return res.status(401).json({ error: "无效登录码" });
@@ -72,6 +72,11 @@ app.get("/api/surveys", (req, res) => {
   res.json(readDB().surveys);
 });
 
+app.get("/api/surveys/public", (req, res) => {
+  const db = readDB();
+  const published = db.surveys.filter((s) => s.status === "published");
+  res.json(published.map((s) => ({ id: s.id, shareId: s.shareId, title: s.title, status: s.status, profiles: s.profiles, options: s.options, publishedAt: s.publishedAt, createdAt: s.createdAt })));
+});
 app.post("/api/surveys", (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "仅管理员" });
   const db = readDB();
@@ -189,7 +194,7 @@ app.post("/api/s/:shareId/vote", (req, res) => {
   for (const v of votes) {
     db.votes = db.votes.filter((x) => !(x.surveyId === s.id && x.code === code && x.profileId === v.profileId));
     if (v.option) {
-      db.votes.push({ surveyId: s.id, surveyTitle: s.title, profileId: v.profileId, code, name: codes[code].name, option: v.option, optionText: v.optionText || "", votedAt: new Date().toISOString() });
+      db.votes.push({ surveyId: s.id, surveyTitle: s.title, profileId: v.profileId, code, name: req.body.name || codes[code].name, option: v.option, optionText: v.optionText || "", votedAt: new Date().toISOString() });
     }
   }
   writeDB(db);

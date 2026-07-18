@@ -34,7 +34,7 @@ async function login() {
     currentUser = d;
     localStorage.setItem("votingCode", code);
     hideAll(); $("mainContainer").style.display = "block";
-    $("userName").textContent = d.name;
+    $("userName").textContent = d.code;
     $("userRole").textContent = d.role === "admin" ? "\u7ba1\u7406\u5458" : "\u7528\u6237";
     if (getHash().startsWith("vote/")) handleRoute(); else showDashboard();
   } catch(e) { $("loginError").textContent = "\u8fde\u63a5\u5931\u8d25"; }
@@ -66,21 +66,37 @@ async function showDashboard() {
   $("dashboardView").style.display = "block";
   if (!currentUser) return;
   try {
-    var res = await fetch("/api/surveys", { headers: { "x-user-code": currentUser.code } });
+    var url = currentUser.role === "admin" ? "/api/surveys" : "/api/surveys/public";
+    var res = await fetch(url, { headers: { "x-user-code": currentUser.code } });
     var surveys = await res.json();
     var list = $("surveyList");
     list.innerHTML = surveys.length === 0 ? "<p style=\"color:#999;text-align:center;padding:20px\">\u6682\u65e0\u95ee\u5377</p>" : "";
     surveys.forEach(function(s) {
       var div = document.createElement("div");
       div.style.cssText = "display:flex;justify-content:space-between;align-items:center;padding:14px;border:1px solid #eee;border-radius:10px;margin-bottom:10px";
-      var st = s.status === "published" ? "\u5df2\u53d1\u5e03" : "\u8349\u7a3f";
-      var sc = s.status === "published" ? "#2e7d32" : "#ff9800";
-      var pc = (s.profiles || []).length;
-      div.innerHTML = "<div><strong>" + s.title + "</strong><div style=\"font-size:12px;color:#999;margin-top:4px\">" + new Date(s.createdAt).toLocaleDateString() + " <span style=\"color:" + sc + "\">" + st + "</span> | " + pc + "\u4eba</div></div><div><button class=\"btn-secondary\" onclick=\"setHash('edit/" + s.id + "')\" style=\"margin-right:6px\">\u7f16\u8f91</button><button class=\"btn-secondary\" onclick=\"loadResults('" + s.id + "')\">\u7edf\u8ba1</button></div>";
+      if (currentUser.role === "admin") {
+        var st = s.status === "published" ? "已发布" : "草稿";
+        var sc = s.status === "published" ? "#2e7d32" : "#ff9800";
+        var pc = (s.profiles || []).length;
+      div.innerHTML = "<div><strong>" + s.title + "</strong><div style=\"font-size:12px;color:#999;margin-top:4px\">" + new Date(s.createdAt).toLocaleDateString() + " <span style=\"color:" + sc + "\">" + st + "</span> | " + pc + "\u4eba</div></div><div><button class=\"btn-secondary\" onclick=\"setHash('edit/" + s.id + "')\" style=\"margin-right:6px\">\u7f16\u8f91</button><button class=\"btn-secondary\" onclick=\"loadResults('" + s.id + "')\">\u7edf\u8ba1</button><button class=\"btn-danger-sm\" onclick=\"deleteSurvey('" + s.id + "')\" style=\"margin-left:6px\">\u5220\u9664</button></div>";
+      } else {
+      div.innerHTML = "<div><strong>" + s.title + "</strong></div><div><button class=\"btn-primary\" onclick=\"window.location.hash='#vote/" + s.shareId + "'\">去投票</button></div>";
+      }
       list.appendChild(div);
     });
   } catch(e) { $("surveyList").innerHTML = "<p style='color:red'>\u52a0\u8f7d\u5931\u8d25</p>"; }
   setHash("dashboard");
+}
+
+
+async function deleteSurvey(id) {
+  if (!confirm("\u786e\u5b9a\u5220\u9664\u6b64\u95ee\u5377\uff1f")) return;
+  try {
+    var res = await fetch("/api/surveys/" + id, { method: "DELETE", headers: { "x-user-code": currentUser.code } });
+    var d = await res.json();
+    if (d.success) { showDashboard(); }
+    else { alert("\u5220\u9664\u5931\u8d25"); }
+  } catch(e) { alert("\u5220\u9664\u5931\u8d25"); }
 }
 
 $("createSurveyBtn").onclick = async function() {
@@ -231,10 +247,10 @@ async function loadResults(surveyId) {
       card.innerHTML = "<h3 style=\"font-size:15px;margin-bottom:10px\">" + ps.profileName + " (" + ps.total + "\u7968)</h3><div class=\"stats-grid\" style=\"grid-template-columns:repeat(5,1fr)\">" +
         "ABCDE".split("").map(function(k) { return "<div class=\"stat-card\"><div class=\"num\">" + (ps.stats[k]||0) + "</div><div class=\"lbl\">" + k + "</div></div>"; }).join("") +
         "</div><div style=\"font-size:12px;color:#999;margin-top:6px\">" +
-        ps.votes.map(function(v) { return v.code+" "+v.name+": "+v.option; }).join(" | ") + "</div>";
+        ps.votes.map(function(v) { return v.code+": "+v.option; }).join(" | ") + "</div>";
       c.appendChild(card);
     });
-    $("exportBtn").onclick = function() { window.open("/api/surveys/" + surveyId + "/export?t=" + Date.now(), "_blank"); };
+    $("exportBtn").onclick = async function() { try { var r = await fetch("/api/surveys/" + surveyId + "/export", { headers: { "x-user-code": currentUser.code } }); var b = await r.blob(); var u = URL.createObjectURL(b); var a = document.createElement("a"); a.href = u; a.download = "投票结果.csv"; a.click(); URL.revokeObjectURL(u); } catch(e) { alert("导出失败"); } };
   } catch(e) { alert("\u52a0\u8f7d\u5931\u8d25"); }
   setHash("results/" + surveyId);
 }
@@ -254,13 +270,13 @@ async function loadVoterView(shareId) {
       $("voterLoginError").textContent = "";
       var cv = await fetch("/api/s/" + shareId + "/check-vote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({code:code}) });
       var cvd = await cv.json();
-      showVoterContent(data, shareId, code, cvd.votes || []);
+      var voterName = $("voterNameInput").value.trim() || code; showVoterContent(data, shareId, code, voterName, cvd.votes || []);
     };
     $("voterCodeInput").onkeydown = function(e) { if (e.key === "Enter") $("voterLoginBtn").click(); };
   } catch(e) { $("voterTitle").textContent = "\u52a0\u8f7d\u5931\u8d25"; }
 }
 
-function showVoterContent(data, shareId, code, existingVotes) {
+function showVoterContent(data, shareId, code, voterName, existingVotes) {
   $("voterLoginCard").style.display = "none";
   $("voterContent").style.display = "block";
   var c = $("voterContent"); c.innerHTML = "";
@@ -288,7 +304,7 @@ function showVoterContent(data, shareId, code, existingVotes) {
         el.src = aimg.src; el.style.cssText = "width:80px;height:80px;border-radius:50%;object-fit:cover;margin:10px 0";
         body.insertBefore(el, body.firstChild);
       };
-      aimg.src = ""/api/avatar/"" + data.id + ""_"" + p.id + ""?t="" + Date.now();
+      aimg.src = "/api/avatar/" + data.id + "_" + p.id + "?t=" + Date.now();
     }
     var intro = document.createElement("div");
     intro.style.cssText = "line-height:1.8;color:#333;white-space:pre-wrap;font-size:14px;margin:8px 0";
@@ -331,7 +347,7 @@ function showVoterContent(data, shareId, code, existingVotes) {
     if (!votes.some(function(v) { return v.option; })) { st.className = "vote-status error"; st.textContent = "\u8bf7\u9009\u62e9\u81f3\u5c11\u4e00\u4eba"; return; }
     sb.disabled = true; sb.textContent = "...";
     try {
-      var res = await fetch("/api/s/" + shareId + "/vote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({code:code, votes:votes}) });
+      var res = await fetch("/api/s/" + shareId + "/vote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({code:code, name:voterName, votes:votes}) });
       var d = await res.json();
       if (d.success) { st.className = "vote-status success"; st.textContent = "\u6295\u7968\u6210\u529f\uff01"; sb.textContent = "\u5df2\u6295\u7968"; sb.disabled = true; }
       else throw new Error(d.error);

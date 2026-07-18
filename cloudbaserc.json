@@ -1,0 +1,45 @@
+{
+  "version": "2.0",
+  "envId": "voting-survey-d1g3bu6wzf7727f32",
+  "framework": {
+    "plugins": {
+      "server": {
+        "use": "@cloudbase/framework-plugin-container",
+        "inputs": {
+          "name": "voting-survey",
+          "serviceName": "voting-survey",
+          "dockerfilePath": "./Dockerfile",
+          "containerPort": 80,
+          "cpu": 0.25,
+          "mem": 0.5,
+          "minNum": 0,
+          "maxNum": 1,
+          "envParameters": {
+            "DATA_DIR": "/data"
+          },
+          "mounts": [
+            {
+              "mountPath": "/data",
+              "volume": {
+                "name": "voting-data"
+              }
+            }
+          ],
+          "policy": {
+            "triggerType": "cpu",
+            "triggerThreshold": 60
+          }
+        }
+      }
+    },
+    "name": "voting-app"
+  },
+  "functionRoot": "./functions",
+  "functions": [],
+  "app": {
+    "serviceName": "voting-survey",
+    "installCommand": "npm install",
+    "buildCommand": "",
+    "outputDir": "./"
+  }
+}
