@@ -293,8 +293,14 @@ function showVoterContent(data, shareId, code, voterName, existingVotes) {
     body.style.display = idx === 0 ? "block" : "none";
     hdr.onclick = function() {
       var open = body.style.display === "block";
-      body.style.display = open ? "none" : "block";
-      document.getElementById("ar_"+idx).textContent = open ? "\u25b6" : "\u25bc";
+      data.profiles.forEach(function(_, j) {
+        document.getElementById("vb_" + j).style.display = "none";
+        document.getElementById("ar_" + j).textContent = "\u25b6";
+      });
+      if (!open) {
+        body.style.display = "block";
+        document.getElementById("ar_" + idx).textContent = "\u25bc";
+      }
     };
     card.appendChild(hdr);
     if (p.hasAvatar) {
